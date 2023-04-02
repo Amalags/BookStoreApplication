@@ -1,0 +1,98 @@
+﻿@using BookStoreApplication.Models
+@model List<Book>
+
+<!DOCTYPE html>
+<html>
+<head>
+    @Styles.Render("~/Content/dxButton.css")
+</head>
+<body>
+
+    @{
+        ViewBag.Title = "Book Store";
+    }
+
+    <h2>Book List</h2>
+
+    <div id="gridContainer" class="table"></div>
+
+    <div id="addBookBtn"></div>
+
+    <div id="chartContainer"></div>
+
+    @section scripts {
+        <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/21.1.5/css/dx.common.css">
+        <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/21.1.5/css/dx.light.css">
+        <script src="https://cdn3.devexpress.com/jslib/20.1.7/js/dx.all.js"></script>
+        <script>
+        $(function () {
+            var data = @Html.Raw(Json.Encode(Model));
+
+            // Group books by author and count the number of books per author
+            var authorCounts = data.reduce(function(acc, book) {
+                var author = book.Author;
+                if (!acc[author]) {
+                    acc[author] = 0;
+                }
+                acc[author] += 1;
+                return acc;
+            }, {});
+
+            var chartData = Object.keys(authorCounts).map(function(author) {
+                return { author: author, count: authorCounts[author] };
+            });
+
+            $("#gridContainer").dxDataGrid({
+                dataSource: @Html.Raw(Json.Encode(Model)),
+                columns: [
+                    { dataField: "Name", caption: "Name" },
+                    { dataField: "Author", caption: "Author" }
+                ],
+                paging: { enabled: true, pageSize: 10 }
+            });
+
+            $("#chartContainer").dxChart({
+                dataSource: chartData,
+                commonSeriesSettings: {
+                    argumentField: "author",
+                    type: "bar"
+                },
+                series: [{
+                    valueField: "count",
+                    name: "Books Count"
+                }],
+                legend: {
+                    visible: false
+                },
+                title: {
+                    text: "Book Count by Author"
+                },
+                valueAxis: {
+                    title: {
+                        text: "Number of Books"
+                    },
+                    tickInterval: 1
+                },
+                argumentAxis: {
+                    title: {
+                        text: "Author"
+                    }
+                }
+            });
+        });
+
+            $("#addBookBtn").dxButton({
+                text: "Add New Book",
+                stylingMode: "contained",
+                elementAttr: {
+                    style: "font-size: 20px;border: 1px solid black;border-radius: 5px; box- shadow: 2px 2px 5px rgba(0,0,0,0.2);"
+                },
+                onClick: function (e) {
+                    window.location.href = '@Url.Action("Create", "Book")';
+                }
+            });
+        </script>
+    }
+
+</body>
+</html>
